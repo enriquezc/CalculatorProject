@@ -47,20 +47,24 @@ class CalculatorViewController: UIViewController {
         }
     }
     
-    
+    // This function responds to all the buttons that
+    // have digits or the decinmal, and the behavior changes
+    // based on what operand the digit may be added to
+    // or if its starting a new operand
 
     @IBAction func onDigitorDecimalPress(_ sender: Any) {
         if let btn = sender as? UIButton,
             let newDigit = btn.titleLabel?.text {
             
+            var resultText = ""
             if curStage == .noOperation {
                 if newDigit == "." {
-                    self.resultLabel.text = "0."
+                    resultText = "0."
                     curStage = .firstOperand
                 } else if newDigit == "0" && self.resultLabel.text == "0" {
                     return
                 } else {
-                    self.resultLabel.text = newDigit
+                    resultText = newDigit
                     curStage = .firstOperand
                 }
             } else if curStage == .firstOperand {
@@ -68,7 +72,8 @@ class CalculatorViewController: UIViewController {
                     return
                 }
                 
-                self.resultLabel.text?.append(newDigit)
+                resultText = self.resultLabel.text ?? ""
+                resultText.append(newDigit)
                 
             } else if curStage == .withOperator {
                 curStage = .secondOperand
@@ -76,12 +81,12 @@ class CalculatorViewController: UIViewController {
                 resetOperatorButtons()
                 
                 if newDigit == "." {
-                    self.resultLabel.text = "0."
+                    resultText = "0."
                 } else if newDigit == "0" && self.resultLabel.text == "0" {
                     return
                 } else {
                 
-                    self.resultLabel.text = newDigit
+                    resultText = newDigit
                 }
                 
             } else {
@@ -90,14 +95,20 @@ class CalculatorViewController: UIViewController {
                     return
                 }
                 
-                self.resultLabel.text?.append(newDigit)
+                resultText = self.resultLabel.text ?? ""
+                resultText.append(newDigit)
+            }
+            
+            // Any changes to UI have to happen on the main thread
+            DispatchQueue.main.async {
+                self.resultLabel.text = resultText
             }
             
         }
         
     }
     
-    
+    // Function that responds to the function buttons in orange
     @IBAction func onOperationPressed(_ sender: Any) {
         // set the current operation, and then reset
         // the state of any operators that may have been pressed
@@ -135,6 +146,8 @@ class CalculatorViewController: UIViewController {
         }
     }
     
+    // Once the equal button is pressed, we write the
+    // value to firebase
     @IBAction func finishOperation(_ sender: Any) {
         // Calculate result of operation
         if currentOperator == "" {
@@ -146,6 +159,7 @@ class CalculatorViewController: UIViewController {
         var currentOperand =  Double(self.resultLabel.text!) as! Double
         
         var result = 0.0
+        var resultString = ""
         
         switch currentOperator {
         case "+":
@@ -183,12 +197,17 @@ class CalculatorViewController: UIViewController {
         
         if floor(result) == result {
             // the result is an int
-            self.resultLabel.text = String(Int(result))
+            resultString = String(Int(result))
             operation = operation + " = " + String(Int(result))
             
         } else {
-            self.resultLabel.text = String(result)
+            resultString = String(result)
             operation = operation + " = " + String(result)
+        }
+        
+        // Any changes to UI need to be on main thread
+        DispatchQueue.main.async {
+            self.resultLabel.text = resultString
         }
         
         curStage = .noOperation
@@ -224,13 +243,11 @@ class CalculatorViewController: UIViewController {
     }
     
     
-    
-    
     // The iPhone calculator app includes a percent button
     // I originally thought this was a mod function, it
     // turns out it just divides things by 100 to represent a percent as a decimal
     // I thought this was completely unnecessary
-    // So I replaced it with a squaring function
+    // So I replaced it with a squaring function to add more functionality
     @IBAction func onSquarePressed(_ sender: Any) {
         currentOperator = "x"
         previousOperand = Double(self.resultLabel.text ?? "0")!
@@ -240,9 +257,10 @@ class CalculatorViewController: UIViewController {
     
     @IBAction func onClearPressed(_ sender: Any) {
         // we reset any value in the label to be zero
-        
+        // and reset the operation
         resultLabel.text = "0"
         curStage = .noOperation
+        
     }
     
     func resetOperatorButtons() {

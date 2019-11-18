@@ -33,6 +33,8 @@ class OperationsTableViewController: UIViewController, UITableViewDelegate, UITa
             var dict: Dictionary<String, Any> = snapshot.value as! Dictionary
             let operationObject = OperationObject(operation: dict["operation"] as! String, timestamp: dict["timestamp"] as! Double)
             self.completedOperations.append(operationObject)
+            // This makes sure any new items are in the correct order
+            // in future implementations, I would have tried to simplify this to save on performance
             self.completedOperations.sort()
             
             self.operationsTable.reloadData()
@@ -52,11 +54,12 @@ class OperationsTableViewController: UIViewController, UITableViewDelegate, UITa
         self.dismiss(animated: true, completion: nil)
     }
     
-    
+    // We don't want to show more than 10 items
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return min(10, completedOperations.count)
     }
     
+    // returns the custom cell we created
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? OperationsTableViewCell {
             cell.operationLabel.text = completedOperations[indexPath.row].operation
@@ -67,6 +70,7 @@ class OperationsTableViewController: UIViewController, UITableViewDelegate, UITa
         return UITableViewCell()
     }
     
+    // sets the table cells to fill out table
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return operationsTable.frame.size.height / 10
     }
